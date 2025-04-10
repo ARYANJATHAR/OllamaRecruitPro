@@ -1,0 +1,608 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OllamaRecruitPro - AI-Powered Recruitment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1rem;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .match-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .match-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .skill-match {
+            background-color: #e7f5e7;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: #2ecc71;
+        }
+
+        .skill-gap {
+            background-color: #f5e7e7;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: #e74c3c;
+        }
+
+        .btn {
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #27ae60);
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #f0f0f0;
+            margin: 1rem 0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        .status-message {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .alert {
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-info {
+            background-color: #e3f2fd;
+            border-color: #90caf9;
+            color: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot me-2"></i>
+                OllamaRecruitPro
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-briefcase me-2"></i>Upload Job Description</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="jd-form">
+                            <div class="mb-3">
+                                <textarea class="form-control" id="jd-text" rows="10" 
+                                    placeholder="Paste job description here..."></textarea>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="jd-progress"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="jd-submit">
+                                <i class="fas fa-upload me-2"></i>Process Job Description
+                            </button>
+                            <div class="loading-spinner" id="jd-loading">
+                                <i class="fas fa-spinner"></i>
+                                <p class="mt-2">Processing job description...</p>
+                            </div>
+                            <div class="status-message" id="jd-status"></div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-file-alt me-2"></i>Upload CV</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="cv-form">
+                            <div class="mb-3">
+                                <textarea class="form-control" id="cv-text" rows="10" 
+                                    placeholder="Paste CV here..."></textarea>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" id="cv-progress"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="cv-submit">
+                                <i class="fas fa-upload me-2"></i>Process CV
+                            </button>
+                            <div class="loading-spinner" id="cv-loading">
+                                <i class="fas fa-spinner"></i>
+                                <p class="mt-2">Processing CV...</p>
+                            </div>
+                            <div class="status-message" id="cv-status"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-magic me-2"></i>Matching Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="no-jd-message" class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Please process a job description first.
+                        </div>
+                        <div id="matching-controls" style="display: none;">
+                            <button id="match-button" class="btn btn-success w-100 mb-3">
+                                <i class="fas fa-magic me-2"></i>Match Candidates
+                            </button>
+                            <div class="loading-spinner" id="match-loading">
+                                <i class="fas fa-spinner"></i>
+                                <p class="mt-2">Matching candidates...</p>
+                            </div>
+                            <div id="matches-container"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar me-2"></i>Dashboard</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="dashboard-container">
+                            <div class="alert alert-info">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Process a job description and match candidates to view dashboard.
+                            </div>
+                            <div class="dashboard-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="total-candidates">0</div>
+                                    <div class="stat-label">Total Candidates</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="avg-match-score">0%</div>
+                                    <div class="stat-label">Avg Match Score</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="top-matches">0</div>
+                                    <div class="stat-label">Top Matches</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentJdId = null;
+        let processedCandidates = [];
+        let matchedCandidates = [];
+        
+        // Show loading spinner
+        function showLoading(elementId) {
+            $(`#${elementId}`).show();
+        }
+        
+        // Hide loading spinner
+        function hideLoading(elementId) {
+            $(`#${elementId}`).hide();
+        }
+        
+        // Show status message
+        function showStatus(elementId, message, isError = false) {
+            const statusElement = $(`#${elementId}`);
+            statusElement.removeClass('status-success status-error')
+                .addClass(isError ? 'status-error' : 'status-success')
+                .html(message)
+                .show();
+            
+            setTimeout(() => {
+                statusElement.fadeOut();
+            }, 5000);
+        }
+        
+        // Update progress bar
+        function updateProgress(elementId, progress) {
+            $(`#${elementId}`).css('width', `${progress}%`);
+        }
+        
+        // Process Job Description
+        $('#jd-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const jdText = $('#jd-text').val();
+            if (!jdText) {
+                showStatus('jd-status', 'Please enter a job description.', true);
+                return;
+            }
+            
+            showLoading('jd-loading');
+            updateProgress('jd-progress', 0);
+            
+            $.ajax({
+                url: '/upload_jd',
+                method: 'POST',
+                data: {
+                    jd_text: jdText
+                },
+                success: function(response) {
+                    if (response.success) {
+                        currentJdId = response.jd_id;
+                        $('#no-jd-message').hide();
+                        $('#matching-controls').show();
+                        showStatus('jd-status', response.message);
+                        updateProgress('jd-progress', 100);
+                    } else {
+                        showStatus('jd-status', response.error || 'Error processing job description.', true);
+                    }
+                },
+                error: function(xhr) {
+                    showStatus('jd-status', xhr.responseJSON?.error || 'Error processing job description.', true);
+                },
+                complete: function() {
+                    hideLoading('jd-loading');
+                }
+            });
+        });
+        
+        // Process CV
+        $('#cv-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const cvText = $('#cv-text').val();
+            if (!cvText) {
+                showStatus('cv-status', 'Please enter a CV.', true);
+                return;
+            }
+            
+            showLoading('cv-loading');
+            updateProgress('cv-progress', 0);
+            
+            $.ajax({
+                url: '/upload_cv',
+                method: 'POST',
+                data: {
+                    cv_text: cvText
+                },
+                success: function(response) {
+                    if (response.success) {
+                        processedCandidates.push(response.candidate_id);
+                        $('#cv-text').val('');
+                        showStatus('cv-status', response.message);
+                        updateProgress('cv-progress', 100);
+                    } else {
+                        showStatus('cv-status', response.error || 'Error processing CV.', true);
+                    }
+                },
+                error: function(xhr) {
+                    showStatus('cv-status', xhr.responseJSON?.error || 'Error processing CV.', true);
+                },
+                complete: function() {
+                    hideLoading('cv-loading');
+                }
+            });
+        });
+        
+        // Match Candidates
+        $('#match-button').on('click', function() {
+            if (!currentJdId) {
+                showStatus('jd-status', 'Please process a job description first.', true);
+                return;
+            }
+            
+            if (processedCandidates.length === 0) {
+                showStatus('cv-status', 'Please process at least one CV first.', true);
+                return;
+            }
+            
+            showLoading('match-loading');
+            
+            $.ajax({
+                url: '/match',
+                method: 'POST',
+                data: {
+                    jd_id: currentJdId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        displayMatches(response.matches);
+                        loadDashboard();
+                        showStatus('jd-status', response.message);
+                    } else {
+                        showStatus('jd-status', response.error || 'Error matching candidates.', true);
+                    }
+                },
+                error: function(xhr) {
+                    showStatus('jd-status', xhr.responseJSON?.error || 'Error matching candidates.', true);
+                },
+                complete: function() {
+                    hideLoading('match-loading');
+                }
+            });
+        });
+        
+        // Display Matches
+        function displayMatches(matches) {
+            const container = $('#matches-container');
+            container.empty();
+            
+            if (matches.length === 0) {
+                container.html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No matching candidates found.</div>');
+                return;
+            }
+            
+            matchedCandidates = matches;
+            
+            matches.forEach((match, index) => {
+                const matchScore = (match.score * 100).toFixed(0);
+                const matchColor = getMatchColor(match.score);
+                
+                const card = $(`
+                    <div class="match-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5><i class="fas fa-user"></i> Candidate #${match.candidate_id}</h5>
+                            <div class="match-score" style="color: ${matchColor};">${matchScore}%</div>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input candidate-checkbox" type="checkbox" value="${match.candidate_id}" id="candidate-${match.candidate_id}">
+                            <label class="form-check-label" for="candidate-${match.candidate_id}">
+                                Select for interview
+                            </label>
+                        </div>
+                        <div class="match-justification mb-3">
+                            <strong><i class="fas fa-list-ul"></i> Match Analysis:</strong>
+                            <p>${match.justification}</p>
+                        </div>
+                    </div>
+                `);
+                
+                container.append(card);
+            });
+        }
+        
+        // Get color based on match score
+        function getMatchColor(score) {
+            if (score >= 0.8) return '#28a745';  // Green
+            if (score >= 0.6) return '#ffc107';  // Yellow
+            if (score >= 0.4) return '#fd7e14';  // Orange
+            return '#dc3545';  // Red
+        }
+        
+        // Load Dashboard
+        function loadDashboard() {
+            if (!currentJdId) return;
+            
+            $.ajax({
+                url: `/dashboard/${currentJdId}`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        displayDashboard(response.dashboard_data);
+                    }
+                }
+            });
+        }
+        
+        // Display Dashboard
+        function displayDashboard(data) {
+            const container = $('#dashboard-container');
+            container.empty();
+            
+            // Add your dashboard visualization here
+            container.html('<div class="alert alert-success"><i class="fas fa-chart-line"></i> Dashboard data loaded successfully.</div>');
+        }
+        
+        // Check processing status periodically
+        function checkStatus() {
+            $.ajax({
+                url: '/status',
+                method: 'GET',
+                success: function(status) {
+                    if (status.jd_processing) {
+                        showLoading('jd-loading');
+                        updateProgress('jd-progress', 50);
+                    } else {
+                        hideLoading('jd-loading');
+                    }
+                    
+                    if (status.cv_processing) {
+                        showLoading('cv-loading');
+                        updateProgress('cv-progress', 50);
+                    } else {
+                        hideLoading('cv-loading');
+                    }
+                    
+                    if (status.matching_in_progress) {
+                        showLoading('match-loading');
+                    } else {
+                        hideLoading('match-loading');
+                    }
+                }
+            });
+        }
+        
+        // Check status every 2 seconds
+        setInterval(checkStatus, 2000);
+    </script>
+</body>
+</html>

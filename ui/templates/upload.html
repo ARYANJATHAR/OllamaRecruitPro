@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OllamaRecruitPro - Upload</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 20px; }
+        textarea { width: 100%; height: 300px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Job Description Form -->
+        <h2>Upload Job Description (Recruiter)</h2>
+        <form id="jdForm">
+            <div class="form-group">
+                <textarea name="jd_text" placeholder="Paste job description here..."></textarea>
+            </div>
+            <button type="submit">Submit Job Description</button>
+        </form>
+
+        <!-- CV Form -->
+        <h2>Upload CV (Candidate)</h2>
+        <form id="cvForm">
+            <div class="form-group">
+                <textarea name="cv_text" placeholder="Paste your CV here..."></textarea>
+            </div>
+            <button type="submit">Submit CV</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results">
+            <h2>Results</h2>
+            <pre id="resultText"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Handle JD Form
+        document.getElementById('jdForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const response = await fetch('/upload_jd', {
+                method: 'POST',
+                body: new FormData(e.target)
+            });
+            const data = await response.json();
+            if(data.success) {
+                // Automatically trigger matching
+                const matchResponse = await fetch('/match', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `jd_id=${data.jd_id}`
+                });
+                const matchData = await matchResponse.json();
+                document.getElementById('resultText').textContent = 
+                    JSON.stringify(matchData, null, 2);
+            }
+        };
+
+        // Handle CV Form
+        document.getElementById('cvForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const response = await fetch('/upload_cv', {
+                method: 'POST',
+                body: new FormData(e.target)
+            });
+            const data = await response.json();
+            document.getElementById('resultText').textContent = 
+                JSON.stringify(data, null, 2);
+        };
+    </script>
+</body>
+</html>
