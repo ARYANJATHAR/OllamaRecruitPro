@@ -7,6 +7,7 @@
     <title>OllamaRecruitPro - AI-Powered Recruitment</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -231,6 +232,156 @@
             border-color: #90caf9;
             color: #0d47a1;
         }
+
+        .processing-feedback {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .processing-feedback.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .processing-feedback.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .processing-feedback.info {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .file-list {
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .progress {
+            height: 5px;
+            margin-top: 5px;
+        }
+
+        .loader-container {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            margin: 10px 0;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .loader-text {
+            margin-top: 10px;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .progress-container {
+            margin: 15px 0;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .processing-steps {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .step.active {
+            background-color: #e3f2fd;
+        }
+
+        .step.completed {
+            background-color: #d4edda;
+        }
+
+        .step-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .step-text {
+            flex-grow: 1;
+        }
+
+        /* Add new styles for job description section */
+        .job-description-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .job-details {
+            margin-top: 1rem;
+        }
+
+        .job-details h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .skill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .skill-tag {
+            background-color: #e7f5e7;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: #2ecc71;
+        }
     </style>
 </head>
 <body>
@@ -243,6 +394,16 @@
         </div>
     </nav>
 
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12 text-end mb-3">
+                <button id="resetDatabaseBtn" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-database me-1"></i> Reset Database
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="row">
             <div class="col-md-6">
@@ -251,23 +412,27 @@
                         <h5><i class="fas fa-briefcase me-2"></i>Upload Job Description</h5>
                     </div>
                     <div class="card-body">
-                        <form id="jd-form">
+                        <form id="jdForm" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <textarea class="form-control" id="jd-text" rows="10" 
-                                    placeholder="Paste job description here..."></textarea>
+                                <label for="jdFile" class="form-label">Upload Job Description File (PDF, CSV, TXT, DOC, DOCX)</label>
+                                <input type="file" class="form-control" id="jdFile" name="jd_file" accept=".pdf,.csv,.txt,.doc,.docx" required>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-fill" id="jd-progress"></div>
+                            <div class="loader-container" id="jdLoader">
+                                <div class="loader"></div>
+                                <div class="loader-text">Processing job description...</div>
+                                <div class="progress mt-3" style="height: 5px;">
+                                    <div class="progress-bar" id="jdProgress" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-text" id="jdProgressText">0%</div>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100" id="jd-submit">
-                                <i class="fas fa-upload me-2"></i>Process Job Description
-                            </button>
-                            <div class="loading-spinner" id="jd-loading">
-                                <i class="fas fa-spinner"></i>
-                                <p class="mt-2">Processing job description...</p>
-                            </div>
-                            <div class="status-message" id="jd-status"></div>
+                            <button type="submit" class="btn btn-primary w-100" id="jdSubmit">Upload Job Description</button>
                         </form>
+                        <div id="jdStatus" class="alert mt-3" style="display: none;"></div>
+                        <div id="jdProcessingError" class="alert alert-danger mt-3" style="display: none;">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="jdErrorMessage">Error processing job description.</span>
+                            <button type="button" class="btn-close float-end" onclick="document.getElementById('jdProcessingError').style.display = 'none'"></button>
+                        </div>
                     </div>
                 </div>
                 
@@ -276,23 +441,23 @@
                         <h5><i class="fas fa-file-alt me-2"></i>Upload CV</h5>
                     </div>
                     <div class="card-body">
-                        <form id="cv-form">
+                        <form id="cvForm" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <textarea class="form-control" id="cv-text" rows="10" 
-                                    placeholder="Paste CV here..."></textarea>
+                                <label for="cvFile" class="form-label">Upload CV Files (PDF, DOC, DOCX) - Multiple files allowed</label>
+                                <input type="file" class="form-control" id="cvFile" name="cv_file" accept=".pdf,.doc,.docx" multiple required>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-fill" id="cv-progress"></div>
+                            <div id="cvFileList" class="file-list mb-3"></div>
+                            <div class="loader-container" id="cvLoader">
+                                <div class="loader"></div>
+                                <div class="loader-text">Processing CVs...</div>
+                                <div class="progress mt-3" style="height: 5px;">
+                                    <div class="progress-bar" id="cvProgress" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-text" id="cvProgressText">0%</div>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100" id="cv-submit">
-                                <i class="fas fa-upload me-2"></i>Process CV
-                            </button>
-                            <div class="loading-spinner" id="cv-loading">
-                                <i class="fas fa-spinner"></i>
-                                <p class="mt-2">Processing CV...</p>
-                            </div>
-                            <div class="status-message" id="cv-status"></div>
+                            <button type="submit" class="btn btn-primary w-100" id="cvSubmit">Upload CVs</button>
                         </form>
+                        <div id="cvStatus" class="alert mt-3" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -308,15 +473,20 @@
                             Please process a job description first.
                         </div>
                         <div id="matching-controls" style="display: none;">
-                            <button id="match-button" class="btn btn-success w-100 mb-3">
+                            <button id="matchButton" class="btn btn-success w-100 mb-3" disabled>
                                 <i class="fas fa-magic me-2"></i>Match Candidates
                             </button>
-                            <div class="loading-spinner" id="match-loading">
-                                <i class="fas fa-spinner"></i>
-                                <p class="mt-2">Matching candidates...</p>
+                            <div class="loader-container" id="matchLoader">
+                                <div class="loader"></div>
+                                <div class="loader-text">Matching candidates...</div>
+                                <div class="progress mt-3" style="height: 5px;">
+                                    <div class="progress-bar" id="matchProgress" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-text" id="matchProgressText">0%</div>
                             </div>
                             <div id="matches-container"></div>
                         </div>
+                        <div id="matchStatus" class="alert mt-3" style="display: none;"></div>
                     </div>
                 </div>
                 
@@ -332,16 +502,20 @@
                             </div>
                             <div class="dashboard-stats">
                                 <div class="stat-card">
-                                    <div class="stat-value" id="total-candidates">0</div>
-                                    <div class="stat-label">Total Candidates</div>
+                                    <div class="stat-value">0</div>
+                                    <div class="stat-label">Candidates</div>
                                 </div>
                                 <div class="stat-card">
-                                    <div class="stat-value" id="avg-match-score">0%</div>
-                                    <div class="stat-label">Avg Match Score</div>
+                                    <div class="stat-value">0</div>
+                                    <div class="stat-label">Matches</div>
                                 </div>
                                 <div class="stat-card">
-                                    <div class="stat-value" id="top-matches">0</div>
-                                    <div class="stat-label">Top Matches</div>
+                                    <div class="stat-value">0%</div>
+                                    <div class="stat-label">Avg. Match</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">0</div>
+                                    <div class="stat-label">Top Candidates</div>
                                 </div>
                             </div>
                         </div>
@@ -351,258 +525,617 @@
         </div>
     </div>
     
+    <!-- Job Description Modal -->
+    <div class="modal fade" id="jobDescriptionModal" tabindex="-1" aria-labelledby="jobDescriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobDescriptionModalLabel">Job Description</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="jobDescriptionModalBody">
+                    Loading...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Details Modal -->
+    <div class="modal fade" id="candidateDetailModal" tabindex="-1" aria-labelledby="candidateDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="candidateDetailModalLabel">Candidate Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="candidateDetailModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Results Container -->
+    <div id="matches-container" class="mb-5" style="display: block;"></div>
+    
+    <!-- Add additional scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <!-- Add Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.0/marked.min.js"></script>
+
+    <!-- Load our application scripts first to ensure functions are defined before use -->
+    <script src="{{ url_for('static', filename='jd-display.js') }}"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+
     <script>
-        let currentJdId = null;
-        let processedCandidates = [];
-        let matchedCandidates = [];
+        let jdId = null;
+        let cvIds = [];
+        let processedFiles = 0;
+        let totalFiles = 0;
         
-        // Show loading spinner
-        function showLoading(elementId) {
-            $(`#${elementId}`).show();
+        function showStatus(elementId, message, type = 'info') {
+            const statusElement = document.getElementById(elementId);
+            statusElement.className = `alert alert-${type} mt-3`;
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+            setTimeout(() => statusElement.style.display = 'none', 5000);
         }
         
-        // Hide loading spinner
-        function hideLoading(elementId) {
-            $(`#${elementId}`).hide();
+        function toggleLoader(elementId, show) {
+            document.getElementById(elementId).style.display = show ? 'block' : 'none';
         }
         
-        // Show status message
-        function showStatus(elementId, message, isError = false) {
-            const statusElement = $(`#${elementId}`);
-            statusElement.removeClass('status-success status-error')
-                .addClass(isError ? 'status-error' : 'status-success')
-                .html(message)
-                .show();
-            
-            setTimeout(() => {
-                statusElement.fadeOut();
-            }, 5000);
-        }
-        
-        // Update progress bar
         function updateProgress(elementId, progress) {
-            $(`#${elementId}`).css('width', `${progress}%`);
+            const progressBar = document.getElementById(elementId);
+            const progressText = document.getElementById(`${elementId}Text`);
+            
+            // Smooth progress animation
+            let currentProgress = parseInt(progressBar.style.width) || 0;
+            const targetProgress = Math.round(progress);
+            
+            const animate = () => {
+                if (currentProgress < targetProgress) {
+                    currentProgress += 1;
+                    progressBar.style.width = `${currentProgress}%`;
+                    progressText.textContent = `${currentProgress}%`;
+                    requestAnimationFrame(animate);
+                }
+            };
+            
+            animate();
         }
         
-        // Process Job Description
-        $('#jd-form').on('submit', function(e) {
-            e.preventDefault();
-            
-            const jdText = $('#jd-text').val();
-            if (!jdText) {
-                showStatus('jd-status', 'Please enter a job description.', true);
-                return;
-            }
-            
-            showLoading('jd-loading');
-            updateProgress('jd-progress', 0);
-            
-            $.ajax({
-                url: '/upload_jd',
-                method: 'POST',
-                data: {
-                    jd_text: jdText
-                },
-                success: function(response) {
-                    if (response.success) {
-                        currentJdId = response.jd_id;
-                        $('#no-jd-message').hide();
-                        $('#matching-controls').show();
-                        showStatus('jd-status', response.message);
-                        updateProgress('jd-progress', 100);
-                    } else {
-                        showStatus('jd-status', response.error || 'Error processing job description.', true);
-                    }
-                },
-                error: function(xhr) {
-                    showStatus('jd-status', xhr.responseJSON?.error || 'Error processing job description.', true);
-                },
-                complete: function() {
-                    hideLoading('jd-loading');
-                }
-            });
-        });
+        function updateCVFileList() {
+            const fileList = document.getElementById('cvFileList');
+            const files = document.getElementById('cvFile').files;
+            fileList.innerHTML = Array.from(files)
+                .map(file => `<div class="file-item">
+                    <span>${file.name}</span>
+                    <span class="badge bg-secondary">${(file.size / 1024).toFixed(2)} KB</span>
+                </div>`)
+                .join('');
+        }
         
-        // Process CV
-        $('#cv-form').on('submit', function(e) {
+        // Check for existing job ID on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there's a job description ID in session
+            fetch('/status')
+                .then(response => response.json())
+                .then(status => {
+                    // Try to get current job description ID from session
+                    fetch('/current_jd')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.jd_id) {
+                                jdId = data.jd_id;
+                                document.getElementById('no-jd-message').style.display = 'none';
+                                document.getElementById('matching-controls').style.display = 'block';
+                                updateMatchButton();
+                            }
+                        })
+                        .catch(error => console.error('Error checking current job description:', error));
+                })
+                .catch(error => console.error('Error checking status:', error));
+        });
+
+        // CV Upload
+        document.getElementById('cvFile').addEventListener('change', updateCVFileList);
+        
+        document.getElementById('cvForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const files = document.getElementById('cvFile').files;
+            totalFiles = files.length;
+            processedFiles = 0;
+            // Reset cvIds array for new batch
+            cvIds = [];
             
-            const cvText = $('#cv-text').val();
-            if (!cvText) {
-                showStatus('cv-status', 'Please enter a CV.', true);
-                return;
-            }
+            toggleLoader('cvLoader', true);
+            updateProgress('cvProgress', 0);
             
-            showLoading('cv-loading');
-            updateProgress('cv-progress', 0);
-            
-            $.ajax({
-                url: '/upload_cv',
-                method: 'POST',
-                data: {
-                    cv_text: cvText
-                },
-                success: function(response) {
-                    if (response.success) {
-                        processedCandidates.push(response.candidate_id);
-                        $('#cv-text').val('');
-                        showStatus('cv-status', response.message);
-                        updateProgress('cv-progress', 100);
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const formData = new FormData();
+                    formData.append('cv_file', files[i]);
+                    
+                    const progress = ((i + 1) / files.length) * 100;
+                    updateProgress('cvProgress', progress);
+                    
+                    const response = await fetch('/upload_cv', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        cvIds.push(data.candidate_id);
+                        processedFiles++;
+                        showStatus('cvStatus', `Processed ${processedFiles} of ${totalFiles} CV(s)`, 'info');
                     } else {
-                        showStatus('cv-status', response.error || 'Error processing CV.', true);
+                        showStatus('cvStatus', `Error processing CV: ${data.message}`, 'danger');
                     }
-                },
-                error: function(xhr) {
-                    showStatus('cv-status', xhr.responseJSON?.error || 'Error processing CV.', true);
-                },
-                complete: function() {
-                    hideLoading('cv-loading');
                 }
-            });
+                
+                if (processedFiles === totalFiles) {
+                    updateProgress('cvProgress', 100);
+                    showStatus('cvStatus', `Successfully processed ${processedFiles} CV(s)!`, 'success');
+                    // Enable match button only if we have processed CVs
+                    updateMatchButton();
+                }
+            } catch (error) {
+                console.error('Error processing CVs:', error);
+                showStatus('cvStatus', 'Error processing CVs', 'danger');
+                updateProgress('cvProgress', 0);
+            } finally {
+                setTimeout(() => toggleLoader('cvLoader', false), 1000);
+            }
         });
         
         // Match Candidates
-        $('#match-button').on('click', function() {
-            if (!currentJdId) {
-                showStatus('jd-status', 'Please process a job description first.', true);
+        document.getElementById('matchButton').addEventListener('click', async () => {
+            if (!jdId || cvIds.length === 0) {
+                showStatus('matchStatus', 'Please upload both job description and CVs first.', 'warning');
                 return;
             }
             
-            if (processedCandidates.length === 0) {
-                showStatus('cv-status', 'Please process at least one CV first.', true);
-                return;
-            }
+            toggleLoader('matchLoader', true);
+            updateProgress('matchProgress', 0);
             
-            showLoading('match-loading');
-            
-            $.ajax({
-                url: '/match',
-                method: 'POST',
-                data: {
-                    jd_id: currentJdId
-                },
-                success: function(response) {
-                    if (response.success) {
-                        displayMatches(response.matches);
-                        loadDashboard();
-                        showStatus('jd-status', response.message);
-                    } else {
-                        showStatus('jd-status', response.error || 'Error matching candidates.', true);
+            try {
+                // Initial processing
+                updateProgress('matchProgress', 20);
+                
+                // Send all candidate IDs at once instead of batches
+                try {
+                    const response = await fetch('/match_candidates', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            jd_id: jdId,
+                            candidate_ids: cvIds
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                },
-                error: function(xhr) {
-                    showStatus('jd-status', xhr.responseJSON?.error || 'Error matching candidates.', true);
-                },
-                complete: function() {
-                    hideLoading('match-loading');
+                    
+                    const data = await response.json();
+                    console.log("Response from match_candidates:", data);
+                    
+                    if (data.success) {
+                        // Display results using the external app.js function
+                        // First try the global namespace, then direct global
+                        if (typeof window.OllamaRecruitPro !== 'undefined' && typeof window.OllamaRecruitPro.displayMatchResults === "function") {
+                            console.log("Using OllamaRecruitPro.displayMatchResults");
+                            window.OllamaRecruitPro.displayMatchResults(data.matches || []);
+                            loadDashboard();
+                            showStatus('matchStatus', 
+                                data.matches.length > 0 
+                                    ? `Successfully matched ${data.matches.length} candidates!` 
+                                    : 'No matches found for the uploaded CVs.', 
+                                data.matches.length > 0 ? 'success' : 'warning'
+                            );
+                        } else if (typeof window.displayMatchResults === "function") {
+                            console.log("Using window.displayMatchResults");
+                            window.displayMatchResults(data.matches || []);
+                            loadDashboard();
+                            showStatus('matchStatus', 
+                                data.matches.length > 0 
+                                    ? `Successfully matched ${data.matches.length} candidates!` 
+                                    : 'No matches found for the uploaded CVs.', 
+                                data.matches.length > 0 ? 'success' : 'warning'
+                            );
+                        } else if (typeof displayMatchResults === "function") {
+                            console.log("Using global displayMatchResults");
+                            displayMatchResults(data.matches || []);
+                            loadDashboard();
+                            showStatus('matchStatus', 
+                                data.matches.length > 0 
+                                    ? `Successfully matched ${data.matches.length} candidates!` 
+                                    : 'No matches found for the uploaded CVs.', 
+                                data.matches.length > 0 ? 'success' : 'warning'
+                            );
+                        } else {
+                            console.error("displayMatchResults function not found in any scope!");
+                            showStatus('matchStatus', "Error: UI code missing. Please refresh the page.", 'danger');
+                        }
+                    } else {
+                        throw new Error(data.message || 'Unknown error occurred');
+                    }
+                } catch (error) {
+                    console.error('Matching error:', error);
+                    showStatus('matchStatus', `Error matching candidates: ${error.message}`, 'danger');
                 }
-            });
+                
+                updateProgress('matchProgress', 100);
+                
+            } catch (error) {
+                console.error('Matching error:', error);
+                showStatus('matchStatus', `Error matching candidates: ${error.message}`, 'danger');
+                updateProgress('matchProgress', 0);
+            } finally {
+                setTimeout(() => toggleLoader('matchLoader', false), 1000);
+            }
         });
         
-        // Display Matches
-        function displayMatches(matches) {
-            const container = $('#matches-container');
-            container.empty();
-            
-            if (matches.length === 0) {
-                container.html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No matching candidates found.</div>');
-                return;
+        // Helper function to get color based on score
+        function getScoreColor(score) {
+            if (score >= 0.85) return 'success';
+            if (score >= 0.7) return 'primary';
+            if (score >= 0.5) return 'warning';
+            return 'danger';
+        }
+        
+        // Helper function to get gradient color for score circle
+        function getScoreGradient(score) {
+            if (score >= 0.85) return '#2ecc71';
+            if (score >= 0.7) return '#4a90e2';
+            if (score >= 0.5) return '#f39c12';
+            return '#e74c3c';
+        }
+        
+        // Helper function to get text color for score
+        function getScoreTextColor(score) {
+            if (score >= 0.85) return '#2ecc71';
+            if (score >= 0.7) return '#4a90e2';
+            if (score >= 0.5) return '#f39c12';
+            return '#e74c3c';
+        }
+        
+        // Helper function to display top skills
+        function displayTopSkills(skills, limit) {
+            if (!skills || skills.length === 0) {
+                return "<p class='text-muted'>No skills found</p>";
             }
             
-            matchedCandidates = matches;
+            const topSkills = skills.slice(0, limit);
+            return topSkills.map(skill => 
+                `<span class="badge bg-light text-dark me-1 mb-1">${skill}</span>`
+            ).join('');
+        }
+        
+        // Add event listeners for candidate checkboxes
+        function addCheckboxListeners() {
+            const checkboxes = document.querySelectorAll('.candidate-checkbox');
+            const selectedCandidateActions = document.getElementById('selectedCandidateActions');
+            const selectedCount = document.getElementById('selectedCount');
             
-            matches.forEach((match, index) => {
-                const matchScore = (match.score * 100).toFixed(0);
-                const matchColor = getMatchColor(match.score);
-                
-                const card = $(`
-                    <div class="match-card">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5><i class="fas fa-user"></i> Candidate #${match.candidate_id}</h5>
-                            <div class="match-score" style="color: ${matchColor};">${matchScore}%</div>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input candidate-checkbox" type="checkbox" value="${match.candidate_id}" id="candidate-${match.candidate_id}">
-                            <label class="form-check-label" for="candidate-${match.candidate_id}">
-                                Select for interview
-                            </label>
-                        </div>
-                        <div class="match-justification mb-3">
-                            <strong><i class="fas fa-list-ul"></i> Match Analysis:</strong>
-                            <p>${match.justification}</p>
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const checkedBoxes = document.querySelectorAll('.candidate-checkbox:checked');
+                    const count = checkedBoxes.length;
+                    
+                    selectedCount.textContent = count;
+                    selectedCandidateActions.style.display = count > 0 ? 'block' : 'none';
+                });
+            });
+        }
+        
+        // Add event listeners for view details buttons
+        function addViewDetailsListeners() {
+            const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+            
+            viewDetailsButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const candidateId = button.getAttribute('data-candidate-id');
+                    showCandidateDetails(candidateId);
+                });
+            });
+        }
+        
+        // Function to show candidate details in a modal
+        function showCandidateDetails(candidateId) {
+            // Fetch candidate details
+            fetch(`/get_candidate/${candidateId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayCandidateModal(data.candidate);
+                    } else {
+                        showStatus('matchStatus', data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching candidate details:', error);
+                    showStatus('matchStatus', 'Failed to load candidate details.', 'error');
+                });
+        }
+        
+        // Function to display candidate details in a modal
+        function displayCandidateModal(candidate) {
+            // Create modal HTML
+            const modalHtml = `
+                <div class="modal fade" id="candidateModal" tabindex="-1" aria-labelledby="candidateModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="candidateModalLabel">
+                                    ${candidate.name} - Complete Profile
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Contact Information</h6>
+                                        <p><strong>Candidate ID:</strong> ${candidate.candidate_id || candidate.id}</p>
+                                        <p><strong>Email:</strong> ${candidate.email}</p>
+                                        <p><strong>Phone:</strong> ${candidate.phone}</p>
+                                        
+                                        ${candidate.summary ? `
+                                        <h6 class="mt-4">Professional Summary</h6>
+                                        <p>${candidate.summary}</p>
+                                        ` : ''}
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <h6>Skills (${candidate.skills.length})</h6>
+                                        <div class="skills-list">
+                                            ${candidate.skills.map(skill => 
+                                                `<span class="badge bg-light text-dark me-1 mb-1">${skill}</span>`
+                                            ).join('')}
+                                        </div>
+                                        
+                                        ${candidate.languages && candidate.languages.length > 0 ? `
+                                        <h6 class="mt-4">Languages</h6>
+                                        <div class="languages-list">
+                                            ${candidate.languages.map(language => 
+                                                `<span class="badge bg-info text-dark me-1 mb-1">${language}</span>`
+                                            ).join('')}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h6>Experience</h6>
+                                        <div class="experience-list">
+                                            ${candidate.experience.length > 0 ? `
+                                            <ul class="list-group">
+                                                ${candidate.experience.map(exp => 
+                                                    `<li class="list-group-item">${exp}</li>`
+                                                ).join('')}
+                                            </ul>
+                                            ` : '<p class="text-muted">No experience data available</p>'}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <h6>Education</h6>
+                                        <div class="education-list">
+                                            ${candidate.education.length > 0 ? `
+                                            <ul class="list-group">
+                                                ${candidate.education.map(edu => 
+                                                    `<li class="list-group-item">${edu}</li>`
+                                                ).join('')}
+                                            </ul>
+                                            ` : '<p class="text-muted">No education data available</p>'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        ${candidate.certifications && candidate.certifications.length > 0 ? `
+                                        <h6>Certifications</h6>
+                                        <div class="certifications-list">
+                                            <ul class="list-group">
+                                                ${candidate.certifications.map(cert => 
+                                                    `<li class="list-group-item">${cert}</li>`
+                                                ).join('')}
+                                            </ul>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
                         </div>
                     </div>
-                `);
-                
-                container.append(card);
+                </div>
+            `;
+            
+            // Add modal to document
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
+            
+            // Initialize and show modal
+            const modal = new bootstrap.Modal(document.getElementById('candidateModal'));
+            modal.show();
+            
+            // Clean up when modal is hidden
+            document.getElementById('candidateModal').addEventListener('hidden.bs.modal', function () {
+                modalContainer.remove();
             });
         }
         
-        // Get color based on match score
-        function getMatchColor(score) {
-            if (score >= 0.8) return '#28a745';  // Green
-            if (score >= 0.6) return '#ffc107';  // Yellow
-            if (score >= 0.4) return '#fd7e14';  // Orange
-            return '#dc3545';  // Red
+        function updateMatchButton() {
+            const matchButton = document.getElementById('matchButton');
+            matchButton.disabled = !(jdId && cvIds.length > 0);
         }
         
-        // Load Dashboard
         function loadDashboard() {
-            if (!currentJdId) return;
+            if (!jdId) return;
             
-            $.ajax({
-                url: `/dashboard/${currentJdId}`,
-                method: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        displayDashboard(response.dashboard_data);
+            fetch(`/dashboard/${jdId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const dashboardData = data.dashboard_data;
+                        const container = document.getElementById('dashboard-container');
+                        
+                        if (dashboardData) {
+                            container.innerHTML = `
+                                <div class="dashboard-stats">
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboardData.total_candidates || 0}</div>
+                                        <div class="stat-label">Total Candidates</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboardData.avg_match_score || 0}%</div>
+                                        <div class="stat-label">Avg Match Score</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboardData.matched_candidates || 0}</div>
+                                        <div class="stat-label">Top Matches</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="match-distribution mt-4">
+                                    <h6>Match Distribution</h6>
+                                    <div class="distribution-bars">
+                                        ${Object.entries(dashboardData.match_distribution || {}).map(([range, count]) => `
+                                            <div class="distribution-item d-flex align-items-center mb-2">
+                                                <div class="distribution-label" style="width: 100px;">${range}</div>
+                                                <div class="progress flex-grow-1" style="height: 20px;">
+                                                    <div class="progress-bar" role="progressbar" 
+                                                        style="width: ${Math.min(count * 10, 100)}%;" 
+                                                        aria-valuenow="${count}" aria-valuemin="0" aria-valuemax="10">
+                                                        ${count}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = `
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No dashboard data available for this job description.
+                                </div>
+                            `;
+                        }
+                    } else {
+                        const container = document.getElementById('dashboard-container');
+                        container.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Error loading dashboard data: ${data.error || 'Unknown error'}
+                            </div>
+                        `;
                     }
-                }
-            });
+                })
+                .catch(error => {
+                    console.error('Error loading dashboard:', error);
+                    const container = document.getElementById('dashboard-container');
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Failed to load dashboard data. Please try again.
+                        </div>
+                    `;
+                });
         }
-        
-        // Display Dashboard
-        function displayDashboard(data) {
-            const container = $('#dashboard-container');
-            container.empty();
+
+        // Reset Database button functionality
+        document.getElementById('resetDatabaseBtn').addEventListener('click', async function() {
+            if (confirm('Are you sure you want to reset the database? This will remove all data.')) {
+                try {
+                    const response = await fetch('/reset_database', {
+                        method: 'POST'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('Database reset successfully.');
+                        window.location.reload();
+                    } else {
+                        alert('Error resetting database: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Reset error:', error);
+                    alert('Error resetting database. Please try again.');
+                }
+            }
+        });
+
+        // Function to load and display job description details
+        function loadJobDescription(jdId) {
+            if (!jdId) return;
             
-            // Add your dashboard visualization here
-            container.html('<div class="alert alert-success"><i class="fas fa-chart-line"></i> Dashboard data loaded successfully.</div>');
+            fetch(`/get_job_description/${jdId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Only update the job description in match results
+                        if (data.job_description) {
+                            const matchedJobDescription = document.getElementById('matchedJobDescription');
+                            if (matchedJobDescription) {
+                                const jd = data.job_description;
+                                document.getElementById('jobTitle').textContent = jd.title || 'Job Position';
+                                document.getElementById('jobCompany').textContent = jd.company || 'Company';
+                                document.getElementById('jobExperience').textContent = jd.required_experience || 'Not specified';
+                                document.getElementById('jobEducation').textContent = jd.required_education || 'Not specified';
+                                
+                                // Update required skills
+                                const requiredSkillsDiv = document.getElementById('jobRequiredSkills');
+                                if (jd.required_skills && jd.required_skills.length > 0) {
+                                    requiredSkillsDiv.innerHTML = jd.required_skills
+                                        .map(skill => `<span class="skill-tag">${skill}</span>`)
+                                        .join('');
+                                }
+                                
+                                // Update preferred skills
+                                const preferredSkillsDiv = document.getElementById('jobPreferredSkills');
+                                if (jd.preferred_skills && jd.preferred_skills.length > 0) {
+                                    preferredSkillsDiv.innerHTML = jd.preferred_skills
+                                        .map(skill => `<span class="skill-tag">${skill}</span>`)
+                                        .join('');
+                                }
+                            }
+                        }
+                    } else {
+                        showStatus('jdStatus', data.error || 'Error loading job description', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading job description:', error);
+                    showStatus('jdStatus', 'Failed to load job description details.', 'danger');
+                });
         }
-        
-        // Check processing status periodically
-        function checkStatus() {
-            $.ajax({
-                url: '/status',
-                method: 'GET',
-                success: function(status) {
-                    if (status.jd_processing) {
-                        showLoading('jd-loading');
-                        updateProgress('jd-progress', 50);
-                    } else {
-                        hideLoading('jd-loading');
-                    }
-                    
-                    if (status.cv_processing) {
-                        showLoading('cv-loading');
-                        updateProgress('cv-progress', 50);
-                    } else {
-                        hideLoading('cv-loading');
-                    }
-                    
-                    if (status.matching_in_progress) {
-                        showLoading('match-loading');
-                    } else {
-                        hideLoading('match-loading');
-                    }
-                }
-            });
-        }
-        
-        // Check status every 2 seconds
-        setInterval(checkStatus, 2000);
     </script>
 </body>
 </html>

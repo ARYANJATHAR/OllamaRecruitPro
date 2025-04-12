@@ -26,9 +26,9 @@ def process_cv_directory(cv_directory):
             cv_files.append(file)
     return cv_texts, cv_files
 
-def process_job_descriptions_csv(csv_path):
+def process_job_descriptions_csv(csv_file):
     """Process job descriptions from a CSV file."""
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_file)
     return df.to_dict('records')
 
 def main():
@@ -60,6 +60,9 @@ def main():
         candidate_skills = candidate_data.get('Skills', [])
         candidate_experience = candidate_data.get('Experience', [])
         candidate_education = candidate_data.get('Education', [])
+        candidate_certifications = candidate_data.get('Certifications', [])
+        candidate_languages = candidate_data.get('Languages', [])
+        candidate_summary = candidate_data.get('Summary', '')
         
         # Store candidate information
         candidate_info.append({
@@ -70,7 +73,10 @@ def main():
             'phone': candidate_phone,
             'skills': candidate_skills,
             'experience': candidate_experience,
-            'education': candidate_education
+            'education': candidate_education,
+            'certifications': candidate_certifications,
+            'languages': candidate_languages,
+            'summary': candidate_summary
         })
         
         # Print processing status
@@ -83,27 +89,44 @@ def main():
         print("-" * 50)
     
     print("\nDetailed Candidate Information Summary:")
-    print("=" * 50)
+    print("=" * 80)
     for info in candidate_info:
         print(f"\nCV File: {info['file']}")
         print(f"Candidate ID: {info['id']}")
         print(f"Name: {info['name']}")
         print(f"Email: {info['email']}")
         print(f"Phone: {info['phone']}")
+        
+        if info.get('summary'):
+            print(f"\nSummary: {info['summary']}")
+        
         print("\nSkills:")
         for skill in info['skills']:
             print(f"- {skill}")
+        
         print("\nExperience:")
         for exp in info['experience']:
             print(f"- {exp}")
+        
         print("\nEducation:")
         for edu in info['education']:
             print(f"- {edu}")
-        print("-" * 50)
+            
+        if info.get('certifications'):
+            print("\nCertifications:")
+            for cert in info['certifications']:
+                print(f"- {cert}")
+                
+        if info.get('languages'):
+            print("\nLanguages:")
+            for lang in info['languages']:
+                print(f"- {lang}")
+                
+        print("-" * 80)
     
     # Process job descriptions from CSV
     print("\nProcessing Job Descriptions...")
-    print("=" * 50)
+    print("=" * 80)
     job_descriptions = process_job_descriptions_csv(job_descriptions_csv)
     
     for job in job_descriptions:
@@ -121,24 +144,26 @@ def main():
         
         # Display top 5 matches with detailed information
         print("\nTop 5 Matches:")
-        print("-" * 50)
+        print("=" * 80)
         for i, match in enumerate(matches[:5]):
-            candidate_id = match['candidate_id']
-            candidate_data = next((c for c in candidate_info if c['id'] == candidate_id), None)
+            candidate_db_id = match['candidate_id']  # Database ID
+            friendly_id = match['friendly_id']  # Friendly ID (like C1234)
+            candidate_info = match['candidate_info']
             
             print(f"\nMatch #{i+1}:")
-            if candidate_data:
-                print(f"Name: {candidate_data['name']}")
-                print(f"Candidate ID: {candidate_id}")
-                print(f"Match Score: {match['score']:.2f}")
-                print("Skills Match:")
-                print(match['justification'])
-            print("-" * 30)
+            print(f"Name: {candidate_info['name']}")
+            print(f"Candidate ID: {friendly_id}")  # Display friendly ID instead of database ID
+            print(f"Match Score: {match['score']:.2f}")
+            
+            # Print the comprehensive analysis
+            print("\n--- MATCH ANALYSIS ---")
+            print(match['analysis'])
+            print("-" * 80)
         
         # Get and display dashboard data
         dashboard_data = system.get_dashboard_data(jd_id)
         print(f"\nDashboard data generated for {job_title}")
-        print("=" * 50)
+        print("=" * 80)
 
 if __name__ == "__main__":
     main()
